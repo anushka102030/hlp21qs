@@ -45,4 +45,5 @@ let testFourBitAdder() =
 let main argv =
     printfn "Starting tests!"
     testFourBitAdder()
+    Console.ReadKey() |> ignore 
     0 // return an integer exit code

@@ -32,18 +32,25 @@
         /// Create an environment from a list of variables
         /// if the environment uses a list then this is just the identity function!
         let createEnv (initData: Variable list) : Environment = 
-            failwithf "createEnv not implemented"
+            initData
+            |> List.map (fun x -> (x.Name, x))
+            |> Map.ofList
 
         /// Lookup a variable's value in envt from its name. If no such variable
         /// exists return an error saying that with useful diagnostic info.
         let varLookup (vName: string) (envt:Environment) : Result<Wire,string> =
-            failwithf "varLookup not implemented"
-        
+            match Map.tryFind vName envt with 
+            | None -> Error "No such variable exists!"
+            | Some v -> envt.[vName].Value
+
         /// Given a variable name, a new variable value, and an envt, return an updated
         /// envt changing the variable value to the specified new value.
         let updateEnvt (vName: string) (newValue: Result<Wire,string>) (env: Environment) =
-            failwithf "updateEnvt not implemented"
-    
+            let newVar = {env.[vName] with Value = newValue}
+            let s = Map.remove vName env 
+            Map.add vName newVar env
+
+
     //-------------------------------------------------------
     // Code here is independent of environment implementation
     //-------------------------------------------------------
@@ -70,19 +77,34 @@
         
     /// Ok constant logic value
     let wConst (w: Wire): Update =
-        failwithf "wconst not implemented"
+        fun env ->
+            Ok w
+
 
     /// Logic AND function
     let wAnd (f1: Update) (f2:Update) : Update =
-        failwithf "wAnd not implemented"
+        fun env -> 
+            match f1 env with 
+            | Ok One -> (if f2 env = Ok One || f2 env = Ok Zero then f2 env else Error "CIN")
+            | Ok Zero -> Ok Zero
+            | _ -> Error "CIN"
         
+
     /// Logic OR function
     let wOr (f1: Update) (f2:Update) : Update =
-        failwithf "wOr not implemented"
-
+        fun env ->
+            match f1 env with 
+            | Ok One -> Ok One 
+            | Ok Zero -> (if f2 env = Ok One || f2 env = Ok Zero then f2 env else Error "CIN")
+            | _ -> Error "CIN"
+           
     /// Logic XOR function
     let wXor (f1: Update) (f2:Update) : Update =
-        failwithf "wXor not implemented"
+        fun env ->
+            match f1 env with 
+            | Ok Zero -> (if f2 env = Ok One || f2 env = Ok Zero then f2 env else Error "CIN")
+            | Ok One -> (if f2 env = Ok One || f2 env = Ok Zero then wInvert f2 env else Error "CIN")
+            | _ -> Error "CIN"
 
     /// Logic value of a named variable
     /// this is the same as varLookup
